@@ -147,11 +147,51 @@ void main(){
     if(viewcolor == 0){
       if(abs(rot) < 0.01) rot = 0;
       else rot = 2.0f*PI;
-      fragColor = mix(vec4(black,1), vec4(white, 1), rot/2.0f/PI);
+      fragColor = mix(vec4(black,1), vec4(white, 1), 2.0f*rot/PI);
     }
-    else fragColor = vec4(colorscheme(rot/2.0f/PI, 1), 1.0);
+    else fragColor = vec4(colorscheme(2.0f*rot/PI, 1), 1.0);
 
   }
+
+  //Combined Map
+  if(viewtype == 2){
+
+    float rot = 0.0;
+    if(N%2 == 0) rot = acos(abs(dot(tempsetA[1]-tempsetA[0], p[1]-p[0]))/length(tempsetA[1]-tempsetA[0])/length(p[1]-p[0]));
+    else rot = acos(abs(dot(tempsetB[1]-tempsetB[0], p[1]-p[0]))/length(tempsetB[1]-tempsetB[0])/length(p[1]-p[0]));
+
+    float scale = 1.0;
+    if(N%2 == 0) scale = length(tempsetA[1]-tempsetA[0])/length(p[1]-p[0]);
+    else scale = length(tempsetB[1]-tempsetB[0])/length(p[1]-p[0]);
+
+    if(viewcolor == 0){
+
+      scale /= threshold;
+
+      if(abs(scale-1) < 0.02) fragColor = vec4(1,0,0,1);
+      if(abs(rot) < 0.02) fragColor = vec4(0,1,0,1);
+
+    }
+    else if(viewcolor == 1){
+      if(scale > threshold) rot = 0.0f;
+
+  //    fragColor = vec4(vec3(1.0-rot/2.0f/PI, 0.0, scale), 1.0);
+    fragColor = vec4(colorscheme(scale, 2.0f*rot/PI), 1.0);
+
+    }
+    //fragColor = mix(vec4(black,1), vec4(white, 1), rot/2.0f/PI);
+
+/*
+    if(viewcolor == 0){
+      if(abs(rot) < 0.01) rot = 0;
+      else rot = 2.0f*PI;
+      fragColor = mix(vec4(black,1), vec4(white, 1), rot/2.0f/PI);
+    }
+    else
+*/
+
+  }
+
 
   //Point Position Overlay
 

@@ -232,10 +232,11 @@ Handle interfaceFunc = [](){
     if(ImGui::BeginTabItem("Coloring")){
 
       ImGui::RadioButton("Scaling Field", &viewtype, 0); ImGui::SameLine();
-      ImGui::RadioButton("Rotation Field", &viewtype, 1);
+      ImGui::RadioButton("Rotation Field", &viewtype, 1); ImGui::SameLine();
+      ImGui::RadioButton("Combined", &viewtype, 2);
 
-      ImGui::RadioButton("Black/White", &viewcolor, 0); ImGui::SameLine();
-      ImGui::RadioButton("Color Gradient", &viewcolor, 1);
+      if(ImGui::RadioButton("Black/White", &viewcolor, 0)) computeTriangles(); ImGui::SameLine();
+      if(ImGui::RadioButton("Color Gradient", &viewcolor, 1)) computeTriangles();
 
       ImGui::DragFloat("Threshold", &threshold, 0.01f, 0.1f, 20.0f);
 
