@@ -13,6 +13,10 @@ uniform float threshold;
 uniform bool viewpoints;
 uniform bool viewanchor;
 uniform vec2 anchor;
+uniform float pointsize;
+
+uniform vec2 stretch;
+uniform vec2 skew;
 
 uniform int N;
 
@@ -26,6 +30,9 @@ const float PI = 3.14159265f;
 
 const vec3 black = vec3(0);
 const vec3 white = vec3(1);
+
+const vec3 diverge = vec3(1.0, 0.85, 0.85);
+const vec3 converge = vec3(0.88, 1, 0.88);
 
 /*
 ============================
@@ -91,6 +98,9 @@ vec3 colorscheme(float t, float v){
 
 void main(){
 
+  //Affine Transformation Matrix
+  mat3 affine = mat3(stretch.x, skew.x, 0, skew.y, stretch.y, 0, 0, 0, 1);
+
   //Background Color
   fragColor = vec4(1);
 
@@ -103,7 +113,7 @@ void main(){
   vec2 tempsetA[K];
   vec2 tempsetB[K];
   for(int i = 0; i < N; i++){ //First Copy
-    tempsetA[i] = p[i];
+    tempsetA[i] = (affine*(vec3(p[i], 1.0))).xy;
     tempsetB[i] = vec2(0);
   }
 
@@ -121,16 +131,20 @@ void main(){
     if(N%2 == 0) scale = length(tempsetA[1]-tempsetA[0])/length(p[1]-p[0]);
     else scale = length(tempsetB[1]-tempsetB[0])/length(p[1]-p[0]);
 
-
     if(viewcolor == 0){
       scale /= threshold;
       if(scale < 1) scale = 0;
       else scale = 1;
-      fragColor = mix(vec4(black,1), vec4(white, 1), scale);
+      fragColor = mix(vec4(converge,1), vec4(diverge, 1), scale);
     }
     else{
       float value = 1.0;
       if(scale > threshold) value = 0.0;
+      if(scale < 0.0) scale = 0.0;
+
+      scale = exp(-scale);
+
+
       fragColor = vec4(colorscheme(scale, value), 1.0);
     }
 
@@ -195,13 +209,15 @@ void main(){
 
   //Point Position Overlay
 
+  vec3 pointcolor = black;
+  if(viewcolor == 1) pointcolor = white;
+
   if(viewpoints){
 
-    vec3 pointcolor = vec3(1,0,0);
-    if(viewcolor == 1) pointcolor = white;
-
     for(int i = 0; i < N; i++)
-      if(length(M-p[i]) < 0.01/zoom) fragColor = vec4(pointcolor,1);
+      if(length(M-(affine*vec3(p[i], 1)).xy) < pointsize/zoom) fragColor = vec4(pointcolor,1);
+
+    if(length(M) < pointsize/zoom) fragColor = vec4(pointcolor, 1);
 
   }
 
@@ -209,11 +225,10 @@ void main(){
 
   if(viewanchor){
 
-    vec3 pointcolor = vec3(1,0,0);
-    if(viewcolor == 1) pointcolor = white;
-
-    if(length(M-anchor) < 0.01/zoom) fragColor = vec4(pointcolor,1);
+    if(length(M-anchor) < 1.5f*pointsize/zoom) fragColor = vec4(black,1);
+    if(length(M-anchor) < pointsize/zoom) fragColor = vec4(white,1);
 
   }
+
 
 }

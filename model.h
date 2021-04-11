@@ -12,12 +12,17 @@ double zoom = 0.2;
 glm::vec2 center = glm::vec2(0);
 glm::vec2 anchor = glm::vec2(-2.0, 0.0);
 
+glm::vec2 stretch = glm::vec2(1);
+glm::vec2 skew = glm::vec2(0);
+
 bool viewpoints = true;
 bool viewrotation = false;
 bool viewanchor = true;
 int viewtype = 0;
 int viewcolor = 0;
 float threshold = 1.0;
+
+float pointsize = 0.01;
 
 int N = 3;
 const int minN = 3;
@@ -134,40 +139,51 @@ std::function<void()> eventHandler = [](){
   }
 
   if(!Tiny::event.clicked.empty()){
+
     if(Tiny::event.clicked.back() == SDL_BUTTON_LEFT){
 
       if(isselected || anchorselected){
         isselected = false;
         anchorselected = false;
       }
+
       else {
 
         glm::vec2 clickpos = glm::vec2(Tiny::event.mouse.x, Tiny::event.mouse.y);
         clickpos = 2.0f * clickpos / glm::vec2(1000, 1000) - glm::vec2(1.0) + center;
 
-
-      if(glm::length(anchor - clickpos/(float)zoom) < 0.03/zoom){
-        anchorselected = true;
-        isselected = false;
-      }
-
-      else
-        for(size_t i = 0; i < pointset.size(); i++){
-
-          if(glm::length(pointset[i] - clickpos/(float)zoom) < 0.03/zoom){
-            isselected = true;
-            selected = i;
-            break;
-          }
-
+        if(glm::length(anchor - clickpos/(float)zoom) < 0.03/zoom){
+          anchorselected = true;
+          isselected = false;
         }
 
+        else {
+          for(size_t i = 0; i < pointset.size(); i++){
 
+              glm::mat3 affine = glm::mat3(stretch.x, skew.x, 0.0, skew.y, stretch.y, 0.0, 0.0, 0.0, 1.0);
+              glm::vec2 transformed = glm::vec2(affine*glm::vec3(pointset[i], 1.0));
+
+              if(glm::length(transformed - clickpos/(float)zoom) < 0.03/zoom){
+                isselected = true;
+                selected = i;
+
+                //Reset Affine Transform Matrix, Transform the Points Indefinitely
+                for(size_t i = 0; i < pointset.size(); i++){
+                  pointset[i] =  glm::vec2(affine*glm::vec3(pointset[i], 1.0));
+                }
+                computeTriangles();
+
+                skew = glm::vec2(0);
+                stretch = glm::vec2(1);
+
+                break;
+              }
+
+          }
+        }
 
       }
-
     }
-
   }
 
   if(Tiny::event.active[SDLK_w]) center += glm::vec2( 0.0,-0.01);
@@ -198,21 +214,45 @@ Handle interfaceFunc = [](){
 
       ImGui::DragFloat2("Center", &center[0], 0.001f, -10.0f, 10.0f);
 
-
-        if(ImGui::DragInt("N", &N, 1, minN, maxN)){
-
-          pointset.clear();
-          for(int i = 0; i < N; i++){
-            pointset.push_back(glm::vec2(cos(2.0f*PI*(float)i/(float)N), sin(2.0f*PI*(float)i/(float)N)));
-          }
-
-          computeTriangles();
-          update = true;
-
-        }
+      ImGui::DragFloat("Point Size", &pointsize, 0.001f, 0.001f, 0.1f);
 
       ImGui::EndTabItem();
+
     }
+
+    if(ImGui::BeginTabItem("Geometry")){
+
+      if(ImGui::DragInt("N", &N, 1, minN, maxN)){
+
+        pointset.clear();
+        for(int i = 0; i < N; i++){
+          pointset.push_back(glm::vec2(cos(2.0f*PI*(float)i/(float)N), sin(2.0f*PI*(float)i/(float)N)));
+        }
+
+        computeTriangles();
+        update = true;
+
+      } ImGui::SameLine();
+
+      if(ImGui::Button("Reset N-gon")){
+        pointset.clear();
+        for(int i = 0; i < N; i++){
+          pointset.push_back(glm::vec2(cos(2.0f*PI*(float)i/(float)N), sin(2.0f*PI*(float)i/(float)N)));
+        }
+        computeTriangles();
+        stretch = glm::vec2(1);
+        skew = glm::vec2(0);
+      }
+
+      ImGui::Text("Affine Transform");
+      ImGui::DragFloat2("Stretch", &stretch[0], 0.01f, 0.0f, 100.0f);
+      ImGui::DragFloat2("Skew", &skew[0], 0.01f, 0.0f, 100.0f);
+
+      ImGui::EndTabItem();
+
+    }
+
+
     if(ImGui::BeginTabItem("Iteration")){
 
       ImGui::Checkbox("View Points", &viewpoints); ImGui::SameLine();

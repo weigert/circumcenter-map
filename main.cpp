@@ -7,8 +7,8 @@ using namespace glm;
 using namespace std;
 
 int main( int argc, char* args[] ) {
-	srand(time(NULL));  //SEED
 
+	Tiny::view.lineWidth = 2.0;
 	Tiny::view.vsync = true;
 	Tiny::window("Triangle Fractal Explorer", 1000, 1000);	//Open Window
 
@@ -54,6 +54,10 @@ int main( int argc, char* args[] ) {
 
 		triangle.uniform("center", center);
 		triangle.uniform("anchor", anchor);
+		triangle.uniform("pointsize", pointsize);
+
+		triangle.uniform("stretch", stretch);
+		triangle.uniform("skew", skew);
 
 		triangle.uniform("N", N);
 		flat.render();											//Draw onto Flat Geometry
@@ -64,6 +68,10 @@ int main( int argc, char* args[] ) {
 			lines.uniform("center", center);
 			lines.uniform("anchor", anchor);
 			lines.uniform("color", glm::vec3(1,0,0));
+
+			lines.uniform("stretch", stretch);
+			lines.uniform("skew", skew);
+
 			model.render(GL_LINES);
 		}
 
