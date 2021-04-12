@@ -104,6 +104,12 @@ void main(){
   //Background Color
   fragColor = vec4(1);
 
+  vec2 polycenter = vec2(0);
+  for(int i = 0; i < N; i++){ //First Copy
+    polycenter += (affine*(vec3(p[i], 1.0))).xy;
+  }
+  polycenter /= float(N);
+
   //Position of this fragment
   vec2 M = (ex_Tex*2-vec2(1)+center)/zoom;
 
@@ -123,6 +129,13 @@ void main(){
       else tempsetA[k] = circumcenter(M, tempsetB[k], tempsetB[(k+1)%N]);
     }
   }
+
+  vec2 transformedcenter = vec2(0);
+  for(int i = 0; i < N; i++){ //First Copy
+    if(N%2 == 0) transformedcenter += tempsetA[i];// = circumcenter(M, tempsetA[k], tempsetA[(k+1)%N]);
+    else transformedcenter += tempsetB[i];// = circumcenter(M, tempsetB[k], tempsetB[(k+1)%N]);
+  }
+  transformedcenter /= float(N);
 
   //Viewing the Scale-Map
   if(viewtype == 0){
@@ -154,6 +167,33 @@ void main(){
   //Viewing the Rotation-Map
   if(viewtype == 1){
 
+    vec2 d0 = p[0]-polycenter;
+    vec2 dN;
+    if(N%2 == 0) dN = tempsetA[0]-transformedcenter;
+    else dN = tempsetB[0]-transformedcenter;
+
+    float rot = acos(abs(dot(dN, d0))/length(dN)/length(d0));
+
+    float thresh = dot(dN, vec2(-d0.y, d0.x));
+
+    if(viewcolor == 0){
+      if(thresh < 0) thresh = 0;
+      else thresh = 1.0;
+  //    if(abs(thresh) < 0.01) thresh = 0;
+  //    else thresh = 1.0f;
+      //  fragColor = mix(vec4(black,1), vec4(white, 1), 2.0f*rot/PI);
+      fragColor = mix(vec4(diverge,1), vec4(converge, 1), thresh);
+
+
+    }
+    else fragColor = vec4(colorscheme(2.0f*rot/PI, 1), 1.0);
+
+  }
+
+/*
+  //Viewing the Rotation-Map
+  if(viewtype == 1){
+
     float rot = 0.0;
     if(N%2 == 0) rot = acos(abs(dot(tempsetA[1]-tempsetA[0], p[1]-p[0]))/length(tempsetA[1]-tempsetA[0])/length(p[1]-p[0]));
     else rot = acos(abs(dot(tempsetB[1]-tempsetB[0], p[1]-p[0]))/length(tempsetB[1]-tempsetB[0])/length(p[1]-p[0]));
@@ -166,6 +206,7 @@ void main(){
     else fragColor = vec4(colorscheme(2.0f*rot/PI, 1), 1.0);
 
   }
+  */
 
   //Combined Map
   if(viewtype == 2){

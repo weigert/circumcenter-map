@@ -248,6 +248,19 @@ Handle interfaceFunc = [](){
       ImGui::DragFloat2("Stretch", &stretch[0], 0.01f, 0.0f, 100.0f);
       ImGui::DragFloat2("Skew", &skew[0], 0.01f, 0.0f, 100.0f);
 
+
+      ImGui::Text("Point List");
+      char a;
+      for(int i = 0; i < pointset.size(); i++){
+        ImGui::Text("[%d]: ", i); ImGui::SameLine();
+        a = i+'0';
+        if(ImGui::DragFloat2(&a, &pointset[i][0], 0.01f, -10.0f, 10.0f)){
+          computeTriangles();
+
+        }
+      }
+
+
       ImGui::EndTabItem();
 
     }
