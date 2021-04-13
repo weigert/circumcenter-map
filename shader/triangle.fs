@@ -40,9 +40,16 @@ const vec3 converge = vec3(0.88, 1, 0.88);
 ============================
 */
 
+bool iscoplanar(vec2 M, vec2 A, vec2 B) {
+  float m1  = -((A.x - M.x) / (A.y - M.y));
+  float m2  = -((B.x - A.x) / (B.y - A.y));
+  if(abs(m2-m1) < 0.001) return true;
+  return false;
+}
+
 vec2 circumcenter(vec2 M, vec2 A, vec2 B) {
 
-  const float EPSILON = 1E-12;
+  const float EPSILON = 1E-6;
 
   float fabsy1y2 = abs(M.y - A.y);
   float fabsy2y3 = abs(A.y - B.y);
@@ -114,7 +121,7 @@ void main(){
   vec2 M = (ex_Tex*2-vec2(1)+center)/zoom;
 
   //Perform Iteration (Extra Array - Not Possible in SSBO!)
-  const int K = 16;
+  const int K = 32;
 
   vec2 tempsetA[K];
   vec2 tempsetB[K];
@@ -122,6 +129,16 @@ void main(){
     tempsetA[i] = (affine*(vec3(p[i], 1.0))).xy;
     tempsetB[i] = vec2(0);
   }
+
+
+    //Check Co-Planarity
+    for(int i = 0; i < N; i++){
+      if(iscoplanar(M, tempsetA[i], tempsetA[(i+1)%N])){
+        if(viewcolor == 0) fragColor = vec4(diverge, 1.0);
+        if(viewcolor == 1) fragColor = vec4(black, 1.0);
+        return;
+      }
+    }
 
   for(int i = 0; i < N; i++){   //Iterate N Times
     for(int k = 0; k < N; k++){ //Over N Intervals
@@ -155,8 +172,8 @@ void main(){
       if(scale > threshold) value = 0.0;
       if(scale < 0.0) scale = 0.0;
 
-      scale = exp(-scale);
-
+    //  scale = log(1.0+scale);
+  //    scale = exp(-scale);
 
       fragColor = vec4(colorscheme(scale, value), 1.0);
     }
@@ -186,6 +203,7 @@ void main(){
 
 
     }
+
     else fragColor = vec4(colorscheme(2.0f*rot/PI, 1), 1.0);
 
   }
@@ -219,15 +237,7 @@ void main(){
     if(N%2 == 0) scale = length(tempsetA[1]-tempsetA[0])/length(p[1]-p[0]);
     else scale = length(tempsetB[1]-tempsetB[0])/length(p[1]-p[0]);
 
-    if(viewcolor == 0){
-
-      scale /= threshold;
-
-      if(abs(scale-1) < 0.02) fragColor = vec4(1,0,0,1);
-      if(abs(rot) < 0.02) fragColor = vec4(0,1,0,1);
-
-    }
-    else if(viewcolor == 1){
+    if(viewcolor == 1){
       if(scale > threshold) rot = 0.0f;
 
   //    fragColor = vec4(vec3(1.0-rot/2.0f/PI, 0.0, scale), 1.0);
@@ -250,7 +260,7 @@ void main(){
 
   //Point Position Overlay
 
-  vec3 pointcolor = black;
+  vec3 pointcolor = vec3(1,0,0);
   if(viewcolor == 1) pointcolor = white;
 
   if(viewpoints){
@@ -258,7 +268,7 @@ void main(){
     for(int i = 0; i < N; i++)
       if(length(M-(affine*vec3(p[i], 1)).xy) < pointsize/zoom) fragColor = vec4(pointcolor,1);
 
-    if(length(M) < pointsize/zoom) fragColor = vec4(pointcolor, 1);
+    if(length(M) < pointsize/zoom) fragColor = vec4(black, 1);
 
   }
 

@@ -7,6 +7,9 @@
 
 #define PI 3.14159265f
 
+int SIZEX = 800;
+int SIZEY = 800;
+
 double zoom = 0.2;
 
 glm::vec2 center = glm::vec2(0);
@@ -17,7 +20,7 @@ glm::vec2 skew = glm::vec2(0);
 
 bool viewpoints = true;
 bool viewrotation = false;
-bool viewanchor = true;
+bool viewanchor = false;
 int viewtype = 0;
 int viewcolor = 0;
 float threshold = 1.0;
@@ -26,7 +29,11 @@ float pointsize = 0.01;
 
 int N = 3;
 const int minN = 3;
-const int maxN = 16;
+const int maxN = 32;
+
+char filename[256] = "output.png";
+//char* filename = new char[256];
+//filename = "output.png";
 
 bool viewiteration = true;
 int depth = 1;
@@ -36,6 +43,8 @@ bool anchorselected = false;
 int selected = 0;
 
 bool update = false;
+
+bool isolines = true;
 
 float frametime = 0.0f;
 
@@ -107,16 +116,18 @@ void computeTriangles(){
 std::function<void()> eventHandler = [](){
 
   if(Tiny::event.scroll.posy)
-    zoom *= 0.9;
+    zoom += 0.01;
   if(Tiny::event.scroll.negy)
-    zoom /= 0.9;
+    zoom -= 0.01;
+
+  if(zoom < 0.01) zoom = 0.01;
 
   if(Tiny::event.mousemove){
 
     if(isselected){
 
       glm::vec2 clickpos = glm::vec2(Tiny::event.mouse.x, Tiny::event.mouse.y);
-      clickpos = 2.0f * clickpos / glm::vec2(1000, 1000) - glm::vec2(1.0) + center;
+      clickpos = glm::vec2(1.0, -1.0)*(2.0f * clickpos / glm::vec2(SIZEX, SIZEY) - glm::vec2(1.0)) + center;
       pointset[selected] = clickpos/(float)zoom;
       triangleset[selected] = clickpos/(float)zoom;
       update = true;
@@ -128,7 +139,7 @@ std::function<void()> eventHandler = [](){
     if(anchorselected){
 
       glm::vec2 clickpos = glm::vec2(Tiny::event.mouse.x, Tiny::event.mouse.y);
-      clickpos = 2.0f * clickpos / glm::vec2(1000, 1000) - glm::vec2(1.0) + center;
+      clickpos = glm::vec2(1.0, -1.0)*(2.0f * clickpos / glm::vec2(SIZEX, SIZEY) - glm::vec2(1.0)) + center;
       anchor = clickpos/(float)zoom;
       update = true;
 
@@ -150,7 +161,7 @@ std::function<void()> eventHandler = [](){
       else {
 
         glm::vec2 clickpos = glm::vec2(Tiny::event.mouse.x, Tiny::event.mouse.y);
-        clickpos = 2.0f * clickpos / glm::vec2(1000, 1000) - glm::vec2(1.0) + center;
+        clickpos = glm::vec2(1.0, -1.0)*(2.0f * clickpos / glm::vec2(SIZEX, SIZEY) - glm::vec2(1.0)) + center;
 
         if(glm::length(anchor - clickpos/(float)zoom) < 0.03/zoom){
           anchorselected = true;
@@ -186,9 +197,9 @@ std::function<void()> eventHandler = [](){
     }
   }
 
-  if(Tiny::event.active[SDLK_w]) center += glm::vec2( 0.0,-0.01);
+  if(Tiny::event.active[SDLK_w]) center += glm::vec2( 0.0, 0.01);
   if(Tiny::event.active[SDLK_a]) center += glm::vec2(-0.01, 0.0);
-  if(Tiny::event.active[SDLK_s]) center += glm::vec2( 0.0, 0.01);
+  if(Tiny::event.active[SDLK_s]) center += glm::vec2( 0.0, -0.01);
   if(Tiny::event.active[SDLK_d]) center += glm::vec2( 0.01, 0.0);
 
 };
@@ -205,7 +216,7 @@ Handle interfaceFunc = [](){
   ImGui::SetNextWindowPos(ImVec2(50, 50), ImGuiCond_Once);
 
   //Open Window
-  ImGui::Begin("Triangle Fractal Controller", NULL, ImGuiWindowFlags_NoResize);
+  ImGui::Begin("Circumcenter Iteration Map", NULL, ImGuiWindowFlags_NoResize);
 
   if(ImGui::BeginTabBar("Tab Bar", ImGuiTabBarFlags_None)){
     if(ImGui::BeginTabItem("Visualization")){
@@ -215,6 +226,22 @@ Handle interfaceFunc = [](){
       ImGui::DragFloat2("Center", &center[0], 0.001f, -10.0f, 10.0f);
 
       ImGui::DragFloat("Point Size", &pointsize, 0.001f, 0.001f, 0.1f);
+
+      ImGui::Text("Viewport: x[%f, %f], y[%f, %f]", (center.x-1)/zoom, (center.x+1)/zoom, (center.y-1)/zoom, (center.y+1)/zoom);
+
+      ImGui::InputText("Filename", filename, 256);
+      if(ImGui::Button("Export")){
+
+        SDL_Surface *s = SDL_CreateRGBSurface(0, Tiny::view.WIDTH, Tiny::view.HEIGHT, 32, 0x0000ff, 0x00ff00, 0xff0000, 0);
+        SDL_LockSurface(s);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0); glReadBuffer(GL_COLOR_BUFFER_BIT);
+        glReadPixels(0, 0, Tiny::view.WIDTH, Tiny::view.HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, s->pixels);
+        SDL_UnlockSurface(s);
+        image::save(s, filename);
+        delete s;
+        std::cout<<"Exported"<<std::endl;
+
+      }
 
       ImGui::EndTabItem();
 
@@ -246,7 +273,7 @@ Handle interfaceFunc = [](){
 
       ImGui::Text("Affine Transform");
       ImGui::DragFloat2("Stretch", &stretch[0], 0.01f, 0.0f, 100.0f);
-      ImGui::DragFloat2("Skew", &skew[0], 0.01f, 0.0f, 100.0f);
+      ImGui::DragFloat2("Skew", &skew[0], 0.01f, -100.0f, 100.0f);
 
 
       ImGui::Text("Point List");
@@ -284,12 +311,16 @@ Handle interfaceFunc = [](){
     }
     if(ImGui::BeginTabItem("Coloring")){
 
-      ImGui::RadioButton("Scaling Field", &viewtype, 0); ImGui::SameLine();
-      ImGui::RadioButton("Rotation Field", &viewtype, 1); ImGui::SameLine();
+      ImGui::Text("Field: "); ImGui::SameLine();
+      ImGui::RadioButton("Scaling", &viewtype, 0); ImGui::SameLine();
+      ImGui::RadioButton("Rotation", &viewtype, 1); ImGui::SameLine();
       ImGui::RadioButton("Combined", &viewtype, 2);
 
-      if(ImGui::RadioButton("Black/White", &viewcolor, 0)) computeTriangles(); ImGui::SameLine();
-      if(ImGui::RadioButton("Color Gradient", &viewcolor, 1)) computeTriangles();
+      ImGui::Text("Scheme"); ImGui::SameLine();
+      if(ImGui::RadioButton("Binary", &viewcolor, 0)) computeTriangles(); ImGui::SameLine();
+      if(ImGui::RadioButton("Gradient", &viewcolor, 1)) computeTriangles();
+
+      ImGui::Checkbox("View Isolines", &isolines);
 
       ImGui::DragFloat("Threshold", &threshold, 0.01f, 0.1f, 20.0f);
 

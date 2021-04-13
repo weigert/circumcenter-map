@@ -2,6 +2,14 @@
 
 A circumcenter fractal explorer on the GPU.
 
+## Utilization
+
+Execute using
+
+    ./main [windowsizex] [windowsizey]
+
+By default, the window size is 800x800.
+
 ## Controls
 
     - WASD: Move

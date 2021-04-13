@@ -14,10 +14,9 @@ out vec4 ex_Color;
 void main(){
 
   mat3 affine = mat3(stretch.x, skew.x, 0, skew.y, stretch.y, 0, 0, 0, 1);
-  vec2 pos = in_Position.xy*zoom - center;
+  vec2 pos = in_Position.xy*zoom;
 
-  pos = (affine*vec3(pos, 1)).xy;
-  pos *= vec2(1, -1);
+  pos = (affine*vec3(pos, 1)).xy - center;
 
   gl_Position = vec4(pos.x, pos.y, -1.0, 1.0);
 
