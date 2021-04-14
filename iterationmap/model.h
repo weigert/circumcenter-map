@@ -42,6 +42,10 @@ bool isselected = false;
 bool anchorselected = false;
 int selected = 0;
 
+bool applylog = false;
+float logscale = 1.0f;
+bool cutoff = true;
+
 bool update = false;
 
 bool isolines = true;
@@ -320,9 +324,12 @@ Handle interfaceFunc = [](){
       if(ImGui::RadioButton("Binary", &viewcolor, 0)) computeTriangles(); ImGui::SameLine();
       if(ImGui::RadioButton("Gradient", &viewcolor, 1)) computeTriangles();
 
-      ImGui::Checkbox("View Isolines", &isolines);
+      ImGui::Checkbox("View Isolines", &isolines); ImGui::SameLine();
+      ImGui::Checkbox("Log-Scale (1 + k*scale)", &applylog);
+      ImGui::DragFloat("k", &logscale, 0.01f, 0.01f, 50.0f);
 
-      ImGui::DragFloat("Threshold", &threshold, 0.01f, 0.1f, 20.0f);
+      ImGui::DragFloat("Isoline", &threshold, 0.01f, 0.1f, 20.0f);
+      ImGui::Checkbox("Cutoff at Isoline", &cutoff);
 
       ImGui::EndTabItem();
     }

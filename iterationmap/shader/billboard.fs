@@ -7,6 +7,7 @@ uniform sampler2D rotationtexture;
 uniform sampler2D fulltexture;
 
 uniform int viewtype;
+uniform int viewcolor;
 uniform bool isolines;
 
 out vec4 fragColor;
@@ -39,7 +40,7 @@ float edgedetect(sampler2D tex){
 */
 
 //  vec4 a0 = texture(scaletexture, ex_Tex + ivec2(0, 0));
-  return float(foundedge)/4.0f;
+  return float(foundedge);
 }
 
 void main(){
@@ -48,10 +49,14 @@ void main(){
 
   vec3 linecolorA = vec3(0);
   vec3 linecolorB = vec3(0);
+  if(viewcolor == 1) linecolorA = vec3(1);
+  if(viewcolor == 1) linecolorB = vec3(1);
+
   if(viewtype == 2){
-    linecolorA = vec3(1,0,0);
-    linecolorB = vec3(0,1,0);
+    linecolorA = vec3(0.8,0,0);
+    linecolorB = vec3(0,0.8,0);
   }
+
 
   if(isolines && viewtype == 2){
     float edgestrengthA = edgedetect(scaletexture);

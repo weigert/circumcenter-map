@@ -72,6 +72,9 @@ int main( int argc, char* args[] ) {
 			triangle.uniform("anchor", anchor);
 			triangle.uniform("pointsize", pointsize);
 
+			triangle.uniform("applylog", false);
+			triangle.uniform("logscale", logscale);
+
 			triangle.uniform("stretch", stretch);
 			triangle.uniform("skew", skew);
 
@@ -95,6 +98,9 @@ int main( int argc, char* args[] ) {
 			triangle.uniform("anchor", anchor);
 			triangle.uniform("pointsize", pointsize);
 
+			triangle.uniform("applylog", false);
+			triangle.uniform("logscale", logscale);
+
 			triangle.uniform("stretch", stretch);
 			triangle.uniform("skew", skew);
 
@@ -111,6 +117,10 @@ int main( int argc, char* args[] ) {
 
 		triangle.uniform("viewtype", viewtype);
 		triangle.uniform("viewcolor", viewcolor);
+
+		triangle.uniform("applylog", applylog);
+		triangle.uniform("cutoff", cutoff);
+		triangle.uniform("logscale", logscale);
 
 		triangle.uniform("center", center);
 		triangle.uniform("anchor", anchor);
@@ -130,6 +140,7 @@ int main( int argc, char* args[] ) {
 		billboard.use();
 
 		billboard.uniform("viewtype", viewtype);
+		billboard.uniform("viewcolor", viewcolor);
 		billboard.uniform("isolines", isolines);
 		billboard.texture("scaletexture", scaleimage.texture);
 		billboard.texture("rotationtexture", rotationimage.texture);

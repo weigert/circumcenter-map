@@ -15,6 +15,10 @@ uniform bool viewanchor;
 uniform vec2 anchor;
 uniform float pointsize;
 
+uniform bool applylog;
+uniform bool cutoff;
+uniform float logscale;
+
 uniform vec2 stretch;
 uniform vec2 skew;
 
@@ -169,8 +173,15 @@ void main(){
     }
     else{
       float value = 1.0;
-      if(scale > threshold) value = 0.0;
-      if(scale < 0.0) scale = 0.0;
+
+      if(cutoff){
+        if(scale > threshold) value = 0.0;
+        if(scale < 0.0) scale = 0.0;
+      }
+
+      if(applylog){
+        scale = log(1+logscale*scale);
+      }
 
     //  scale = log(1.0+scale);
   //    scale = exp(-scale);
