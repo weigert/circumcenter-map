@@ -63,8 +63,13 @@ void main(){
     float edgestrengthB = edgedetect(rotationtexture);
     fragColor = mix(fragColor, vec4(linecolorA, 1.0), edgestrengthA);
     fragColor = mix(fragColor, vec4(linecolorB, 1.0), edgestrengthB);
-    if(edgestrengthA > 0 && edgestrengthB > 0)
-    fragColor = vec4(0,0,0,1);
+    if(edgestrengthA > 0 && edgestrengthB > 0){
+      fragColor = vec4(0,0,0,1);
+      //Found an Intersection!
+  //    atomicAdd(intset[0].x, 1);
+  //    atomicAdd(, 100);
+  //    atomicAdd(intset[intset[0].x].y, 100);
+    }
 
   //  if()
   }

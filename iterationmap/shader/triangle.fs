@@ -276,7 +276,7 @@ void main(){
 
   if(viewpoints){
 
-    if(length(M) < pointsize/zoom) fragColor = vec4(black, 1);
+    if(length(M) < pointsize/zoom) fragColor = vec4(vec3(1,0,0), 1);
 
   }
 

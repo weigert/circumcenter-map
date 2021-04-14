@@ -170,7 +170,7 @@ std::function<void()> eventHandler = [](){
 
     if(anchorselected){
 
-      anchor = mousepos/(float)zoom;
+      anchor = mousepos;
       update = true;
 
       computeTriangles();
@@ -371,6 +371,16 @@ Handle interfaceFunc = [](){
 };
 
 
+
+std::function<void(Model* m, std::vector<glm::vec2>)> construct_points = [](Model* h, std::vector<glm::vec2> points){
+
+  for(size_t i = 0; i < points.size(); i++){
+    h->positions.push_back(points[i].x);
+    h->positions.push_back(points[i].y);
+    h->positions.push_back(1.0);
+  }
+
+};
 
 
 std::function<void(Model* m, std::vector<glm::vec2>)> construct_strip = [](Model* h, std::vector<glm::vec2> points){

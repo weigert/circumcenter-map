@@ -22,11 +22,11 @@ int main( int argc, char* args[] ) {
 	Tiny::event.handler  = eventHandler;	//Set Event Handler
 	Tiny::view.interface = interfaceFunc;	//Set Interface Function
 
-	std::vector<vec2> intersections;
+	std::vector<glm::vec2> intersections;
 
 	Square2D flat;												//Flat geometry primitive
-	Shader triangle({"shader/triangle.vs", "shader/triangle.fs"}, {"in_Quad", "in_Tex"}, {"pointset"});
 	Shader billboard({"shader/billboard.vs", "shader/billboard.fs"}, {"in_Quad", "in_Tex"});
+	Shader triangle({"shader/triangle.vs", "shader/triangle.fs"}, {"in_Quad", "in_Tex"}, {"pointset"});
 	Shader lines({"shader/lines.vs", "shader/lines.fs"}, {"in_Position", "in_Normal", "in_Color"});
 
 	//Set Up the Point-Set
@@ -39,6 +39,9 @@ int main( int argc, char* args[] ) {
 
 	Model model(construct_strip, triangleset);
 	model.indexed = false;
+
+	Model intersectionmodel(construct_points, intersections);
+	intersectionmodel.indexed = false;
 
 	auto start = std::chrono::high_resolution_clock::now();
 	auto stop = std::chrono::high_resolution_clock::now();
@@ -164,6 +167,39 @@ int main( int argc, char* args[] ) {
 			model.render(GL_LINES);
 
 			model.render(GL_POINTS);
+		}
+
+		if(viewtype == 2 && isolines){
+
+			//Find all the Intersection Points!
+			int* s = new int[Tiny::view.WIDTH*Tiny::view.HEIGHT];
+			intersections.clear();
+			glBindFramebuffer(GL_FRAMEBUFFER, 0); glReadBuffer(GL_COLOR_BUFFER_BIT);
+			glReadPixels(0, 0, Tiny::view.WIDTH, Tiny::view.HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, s);
+			for(int i = 0; i < Tiny::view.WIDTH*Tiny::view.HEIGHT; i++){
+				if( ((s[i] >>  0) & 0xff) == 0 &&
+						((s[i] >>  8) & 0xff) == 0 &&
+						((s[i] >> 16) & 0xff) == 0){
+							glm::vec2 ip = glm::vec2(i%Tiny::view.HEIGHT, i/Tiny::view.HEIGHT);
+							ip = ((2.0f * ip / glm::vec2(SIZEX, SIZEY) - glm::vec2(1.0)) + center)/float(zoom);
+							intersections.push_back(ip);
+						}
+			}
+			delete s;
+
+			intersectionmodel.construct(construct_points, intersections);
+
+			lines.use();
+			lines.uniform("zoom", zoom);
+			lines.uniform("center", center);
+			lines.uniform("anchor", anchor);
+			lines.uniform("color", glm::vec3(1,0,0));
+
+			lines.uniform("stretch", stretch);
+			lines.uniform("skew", skew);
+
+			intersectionmodel.render(GL_POINTS);
+
 		}
 
 		// Draw the Image with Effects and Annotations
