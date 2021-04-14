@@ -166,7 +166,9 @@ int main( int argc, char* args[] ) {
 
 			model.render(GL_LINES);
 
-			model.render(GL_POINTS);
+			if(viewpoints){
+				model.render(GL_POINTS);
+			}
 		}
 
 		if(viewtype == 2 && isolines){

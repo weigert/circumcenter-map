@@ -284,7 +284,7 @@ void main(){
 
   if(viewanchor){
 
-    if(length(M-anchor) < 1.5f*pointsize/zoom) fragColor = vec4(black,1);
+    if(length(M-anchor) < 1.5f*pointsize/zoom) fragColor = vec4(vec3(1,0,0),1);
     if(length(M-anchor) < pointsize/zoom) fragColor = vec4(white,1);
 
   }
