@@ -171,7 +171,7 @@ int main( int argc, char* args[] ) {
 			}
 		}
 
-		if(viewtype == 2 && isolines){
+		if(viewtype == 2 && viewcolor == 0 && isolines){
 
 			//Find all the Intersection Points!
 			int* s = new int[Tiny::view.WIDTH*Tiny::view.HEIGHT];

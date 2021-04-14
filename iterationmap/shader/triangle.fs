@@ -251,6 +251,11 @@ void main(){
     if(viewcolor == 1){
       if(scale > threshold) rot = 0.0f;
 
+      if(applylog){
+        scale = log(1+logscale*scale);
+      }
+
+
   //    fragColor = vec4(vec3(1.0-rot/2.0f/PI, 0.0, scale), 1.0);
     fragColor = vec4(colorscheme(scale, 2.0f*rot/PI), 1.0);
 
