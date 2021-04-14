@@ -276,9 +276,6 @@ void main(){
 
   if(viewpoints){
 
-    for(int i = 0; i < N; i++)
-      if(length(M-(affine*vec3(p[i], 1)).xy) < pointsize/zoom) fragColor = vec4(pointcolor,1);
-
     if(length(M) < pointsize/zoom) fragColor = vec4(black, 1);
 
   }
@@ -291,6 +288,5 @@ void main(){
     if(length(M-anchor) < pointsize/zoom) fragColor = vec4(white,1);
 
   }
-
 
 }

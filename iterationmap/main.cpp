@@ -15,11 +15,14 @@ int main( int argc, char* args[] ) {
 	}
 
 	Tiny::view.lineWidth = 2.0;
+	Tiny::view.pointSize = 8.0;
 	Tiny::view.vsync = true;
-	Tiny::window("Circumcenter Iteration Map", SIZEX, SIZEY);	//Open Window
+	Tiny::window("Iterative Circumcenter Map (c) 2021 N. McDonald, D. Reznik, R. Garcia", SIZEX, SIZEY);	//Open Window
 
 	Tiny::event.handler  = eventHandler;	//Set Event Handler
 	Tiny::view.interface = interfaceFunc;	//Set Interface Function
+
+	std::vector<vec2> intersections;
 
 	Square2D flat;												//Flat geometry primitive
 	Shader triangle({"shader/triangle.vs", "shader/triangle.fs"}, {"in_Quad", "in_Tex"}, {"pointset"});
@@ -158,9 +161,9 @@ int main( int argc, char* args[] ) {
 			lines.uniform("stretch", stretch);
 			lines.uniform("skew", skew);
 
-			lines.uniform("points", false);
 			model.render(GL_LINES);
 
+			model.render(GL_POINTS);
 		}
 
 		// Draw the Image with Effects and Annotations

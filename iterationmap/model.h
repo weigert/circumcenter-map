@@ -18,6 +18,8 @@ glm::vec2 anchor = glm::vec2(-2.0, 0.0);
 glm::vec2 stretch = glm::vec2(1);
 glm::vec2 skew = glm::vec2(0);
 
+glm::vec2 mousepos = glm::vec2(0);
+
 bool viewpoints = true;
 bool viewrotation = false;
 bool viewanchor = false;
@@ -114,7 +116,31 @@ void computeTriangles(){
   update = true;
 }
 
+glm::vec2 scalerot(){
+  std::vector<glm::vec2> newset;
+  glm::vec2 _scalerot = glm::vec2(0);
+  for(int i = 0; i < N; i++)
+    newset.push_back(pointset[i]);
+  for(int i = 0; i < N; i++){
+    for(int j = 0; j < N; j++){
+      newset.push_back(circumcenter(mousepos, newset[i*N+j], newset[i*N+(j+1)%N]));
+    }
+  }
 
+  glm::vec2 originalcenter = glm::vec2(0);
+  glm::vec2 transformcenter = glm::vec2(0);
+  for(int i = 0; i < N; i++){
+    originalcenter += pointset[i]/(float)N;
+    transformcenter += newset[N*N+i]/(float)N;
+  }
+
+  _scalerot.x = glm::length(newset[N*N]-transformcenter)/glm::length(newset[0]-originalcenter);
+  _scalerot.y = acos((dot(newset[N*N]-transformcenter, newset[0]-originalcenter))/glm::length(newset[N*N]-transformcenter)/glm::length(newset[0]-originalcenter));
+
+  return _scalerot;
+}
+
+glm::vec2 atpos = glm::vec2(0);
 
 // Event Handler
 std::function<void()> eventHandler = [](){
@@ -126,14 +152,16 @@ std::function<void()> eventHandler = [](){
 
   if(zoom < 0.01) zoom = 0.01;
 
+  mousepos = glm::vec2(Tiny::event.mouse.x, Tiny::event.mouse.y);
+  mousepos = (glm::vec2(1.0, -1.0)*(2.0f * mousepos / glm::vec2(SIZEX, SIZEY) - glm::vec2(1.0)) + center)/float(zoom);
+
   if(Tiny::event.mousemove){
+    atpos = scalerot();
 
     if(isselected){
 
-      glm::vec2 clickpos = glm::vec2(Tiny::event.mouse.x, Tiny::event.mouse.y);
-      clickpos = glm::vec2(1.0, -1.0)*(2.0f * clickpos / glm::vec2(SIZEX, SIZEY) - glm::vec2(1.0)) + center;
-      pointset[selected] = clickpos/(float)zoom;
-      triangleset[selected] = clickpos/(float)zoom;
+      pointset[selected] = mousepos;
+      triangleset[selected] = mousepos;
       update = true;
 
       computeTriangles();
@@ -142,9 +170,7 @@ std::function<void()> eventHandler = [](){
 
     if(anchorselected){
 
-      glm::vec2 clickpos = glm::vec2(Tiny::event.mouse.x, Tiny::event.mouse.y);
-      clickpos = glm::vec2(1.0, -1.0)*(2.0f * clickpos / glm::vec2(SIZEX, SIZEY) - glm::vec2(1.0)) + center;
-      anchor = clickpos/(float)zoom;
+      anchor = mousepos/(float)zoom;
       update = true;
 
       computeTriangles();
@@ -164,10 +190,7 @@ std::function<void()> eventHandler = [](){
 
       else {
 
-        glm::vec2 clickpos = glm::vec2(Tiny::event.mouse.x, Tiny::event.mouse.y);
-        clickpos = glm::vec2(1.0, -1.0)*(2.0f * clickpos / glm::vec2(SIZEX, SIZEY) - glm::vec2(1.0)) + center;
-
-        if(glm::length(anchor - clickpos/(float)zoom) < 0.03/zoom){
+        if(glm::length(anchor - mousepos) < 0.03/zoom){
           anchorselected = true;
           isselected = false;
         }
@@ -178,7 +201,7 @@ std::function<void()> eventHandler = [](){
               glm::mat3 affine = glm::mat3(stretch.x, skew.x, 0.0, skew.y, stretch.y, 0.0, 0.0, 0.0, 1.0);
               glm::vec2 transformed = glm::vec2(affine*glm::vec3(pointset[i], 1.0));
 
-              if(glm::length(transformed - clickpos/(float)zoom) < 0.03/zoom){
+              if(glm::length(transformed - mousepos) < 0.03/zoom){
                 isselected = true;
                 selected = i;
 
@@ -220,7 +243,7 @@ Handle interfaceFunc = [](){
   ImGui::SetNextWindowPos(ImVec2(50, 50), ImGuiCond_Once);
 
   //Open Window
-  ImGui::Begin("Circumcenter Iteration Map", NULL, ImGuiWindowFlags_NoResize);
+  ImGui::Begin("Iterative Circumcenter Map (c) N. McDonald, D. Reznik", NULL, ImGuiWindowFlags_NoResize);
 
   if(ImGui::BeginTabBar("Tab Bar", ImGuiTabBarFlags_None)){
     if(ImGui::BeginTabItem("Visualization")){
@@ -229,12 +252,19 @@ Handle interfaceFunc = [](){
 
       ImGui::DragFloat2("Center", &center[0], 0.001f, -10.0f, 10.0f);
 
-      ImGui::DragFloat("Point Size", &pointsize, 0.001f, 0.001f, 0.1f);
+      if(ImGui::DragFloat("Point Size", &Tiny::view.pointSize, 1.0f, 1.0f, 20.0f)){
+         glPointSize(Tiny::view.pointSize);
+      }
+      if(ImGui::DragFloat("Line Width", &Tiny::view.lineWidth, 1.0f, 1.0f, 20.0f)){
+         glLineWidth(Tiny::view.lineWidth);
+      }
 
+      ImGui::Text("Mouse Over: [%f, %f]", mousepos.x, mousepos.y);
+      ImGui::Text("At Mouse - Scale: %f, Rotation: %f", atpos.x, atpos.y);
       ImGui::Text("Viewport: x[%f, %f], y[%f, %f]", (center.x-1)/zoom, (center.x+1)/zoom, (center.y-1)/zoom, (center.y+1)/zoom);
 
       ImGui::InputText("Filename", filename, 256);
-      if(ImGui::Button("Export")){
+      if(ImGui::Button("Export Image")){
 
         SDL_Surface *s = SDL_CreateRGBSurface(0, Tiny::view.WIDTH, Tiny::view.HEIGHT, 32, 0x0000ff, 0x00ff00, 0xff0000, 0);
         SDL_LockSurface(s);
