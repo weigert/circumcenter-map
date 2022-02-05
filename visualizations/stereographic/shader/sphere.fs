@@ -16,6 +16,7 @@ const int maxN = 8;
 const float PI = 3.14159265f;
 
 uniform float scale;
+uniform float logscale;
 
 uniform vec4 diverge;
 uniform vec4 converge;
@@ -105,9 +106,12 @@ vec4 planesample(vec2 M){
                 length(tempsetB[1] - tempsetB[0]);
 
     //Scale is in [0, inf]
+    //Log(scale) is in [-inf, inf], mapping 1 -> 0
+    float scale = log(L0/L1);
 
-    return mix(converge, diverge, (atan(L0/L1)+PI/2.0));
-//    return mix(converge, diverge, abs(log(log(L0 / L1))));
+
+//    return mix(converge, diverge, (atan(L0/L1));
+    return mix(converge, diverge, (atan(-logscale*scale)+PI/2)/PI);
   //  return mix(converge, diverge, exp(-(L0 / L1)));
 
   }

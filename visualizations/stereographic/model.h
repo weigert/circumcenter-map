@@ -4,7 +4,68 @@ Icosphere Construction Functions
 
 */
 
-void isobuild(vector<glm::vec3>& positions, vector<glm::uvec3>& indices){
+using namespace glm;
+#define PI 3.14159265f
+
+int N = 3;
+float K = 1.0f;
+float EPSILON = 1E-16;
+
+bool colinear(dvec2 M, dvec2 A, dvec2 B){
+  dmat2 G = dmat2(A.x-M.x, B.x-M.x, A.y-M.y, B.y-M.y);
+  return (abs(determinant(G)) < EPSILON);
+}
+
+dvec2 circumcenter(dvec2 M, dvec2 A, dvec2 B){
+  dmat2 Q = inverse(dmat2(A.x-M.x, B.x-M.x, A.y-M.y, B.y-M.y));
+  return Q*0.5*dvec2(dot(A,A)-dot(M,M), dot(B,B)-dot(M,M));
+}
+
+dvec2 stereographic(dvec3 p, double k){
+  return k*dvec2(p.x/(1.0f-p.y), p.z/(1.0f-p.y));       //Projected Plane
+}
+
+float getscale(dvec2 M){
+
+  dvec2 original[N];
+  dvec2 tempsetA[N];
+  dvec2 tempsetB[N];
+
+  for(int i = 0; i < N; i++){
+    original[i] = dvec2(
+      cos(double(i)/double(N)*2.0f*PI),
+      sin(double(i)/double(N)*2.0f*PI)
+    );
+  }
+
+  for(int i = 0; i < N; i++){
+    tempsetA[i] = original[i];      //Copy
+    tempsetB[i] = dvec2(0);          //Empty Set
+  }
+
+  for(int i = 0; i < N; i++){   //Iterate N Times
+
+    for(int k = 0; k < N; k++){   //Iterate N Times
+      if(i%2 == 0 && colinear(M, tempsetA[k], tempsetA[(k+1)%N])) return 1.0f;
+      if(i%2 == 1 && colinear(M, tempsetB[k], tempsetB[(k+1)%N])) return 1.0f;
+    }
+
+    for(int k = 0; k < N; k++){ //Over N Intervals
+      if(i%2 == 0) tempsetB[k] = circumcenter(M, tempsetA[k], tempsetA[(k+1)%N]);
+      else tempsetA[k] = circumcenter(M, tempsetB[k], tempsetB[(k+1)%N]);
+    }
+
+  }
+
+  double L0, L1;
+  L0 = length(original[1] - original[0]);
+  L1 = (N%2 == 0)? length(tempsetA[1] - tempsetA[0]):
+              length(tempsetB[1] - tempsetB[0]);
+  return L1 / L0;
+
+}
+
+void isobuild(vector<vec3>& positions, vector<uvec3>& indices){
 
   const float r = 10.0f;
   const float a = 72.0f/360.0f*2.0f*3.14159265f;
@@ -69,11 +130,11 @@ void isobuild(vector<glm::vec3>& positions, vector<glm::uvec3>& indices){
 
 };
 
-void isosplit(vector<glm::vec3>& positions, vector<glm::uvec3>& indices){
+void isosplit(vector<vec3>& positions, vector<uvec3>& indices){
 
-  std::vector<glm::uvec3> newind;
+  std::vector<uvec3> newind;
 
-  auto addpos = [&](glm::vec3 p){
+  auto addpos = [&](vec3 p){
     positions.push_back(p);
   };
 
@@ -91,19 +152,19 @@ void isosplit(vector<glm::vec3>& positions, vector<glm::uvec3>& indices){
     GLuint k3 = indices[i][2];
 
     //Positions of the old triangle
-    glm::vec3 a = positions[k1];//glm::vec3(positions[k1][0], positions[k1][1], positions[k1][2]);
-    glm::vec3 b = positions[k2];//glm::vec3(positions[k2][0], positions[k2][1], positions[k2][2]);
-    glm::vec3 c = positions[k3];//glm::vec3(positions[k3][0], positions[k3][1], positions[k3][2]);
+    vec3 a = positions[k1];//vec3(positions[k1][0], positions[k1][1], positions[k1][2]);
+    vec3 b = positions[k2];//vec3(positions[k2][0], positions[k2][1], positions[k2][2]);
+    vec3 c = positions[k3];//vec3(positions[k3][0], positions[k3][1], positions[k3][2]);
 
     //Compute Split Points
-    glm::vec3 d = 0.5f*(a+b);
-    glm::vec3 e = 0.5f*(b+c);
-    glm::vec3 f = 0.5f*(c+a);
+    vec3 d = 0.5f*(a+b);
+    vec3 e = 0.5f*(b+c);
+    vec3 f = 0.5f*(c+a);
 
     //Normalize vectors to project onto sphere
-    d = r*glm::normalize(d);
-    e = r*glm::normalize(e);
-    f = r*glm::normalize(f);
+    d = r*normalize(d);
+    e = r*normalize(e);
+    f = r*normalize(f);
 
     //Starting Indices
     int NI = positions.size();

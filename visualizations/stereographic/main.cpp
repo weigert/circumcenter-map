@@ -6,10 +6,14 @@ using namespace std;
 
 int main( int argc, char* args[] ) {
 
+  int viewmode = 0;
+  float logscale = 1.0f;
+
   Tiny::window("Circumcenter Iteration Map Stereographic Projection", 800, 800);	//Open Window
 
   cam::near = -100.0f;
   cam::far = 100.0f;
+  cam::zoomrate *= 3.0f;
   cam::init(61.0f, cam::ORTHO);
 
   Shader sphere({"shader/sphere.vs", "shader/sphere.fs"}, {"in_Position"});
@@ -20,8 +24,13 @@ int main( int argc, char* args[] ) {
   std::vector<glm::uvec3> indices;
 
   isobuild(positions, indices);
-  for(int i = 0; i < 5; i++)
+  for(int i = 0; i < 6; i++)
     isosplit(positions, indices);
+
+  for(auto& p: positions){
+    p = 5.0f*normalize(p);
+    p /= getscale(stereographic(p/5.0f, K));
+  }
 
   std::sort(indices.begin(), indices.end(), [&](const glm::uvec3& a, const glm::uvec3& b){
     glm::vec3 ap = cam::vp*glm::vec4((positions[a.x] + positions[a.y] + positions[a.z])/3.0f, 1.0);
@@ -29,7 +38,8 @@ int main( int argc, char* args[] ) {
     return ap.z > bp.z;
   });
 
-  icosahedron.bind<glm::vec3>("in_Position", new Buffer(positions), true);
+  Buffer posbuf(positions);
+  icosahedron.bind<glm::vec3>("in_Position", &posbuf);
   icosahedron.index(new Buffer(indices), true);
   icosahedron.SIZE = indices.size()*3;
 
@@ -37,10 +47,6 @@ int main( int argc, char* args[] ) {
 
   glm::vec4 converge = glm::vec4(0,1,0,0.75);
   glm::vec4 diverge = glm::vec4(1,0,0,0);
-
-  int N = 3;
-  float scale = 1.0f;
-  int viewmode = 0;
 
   Tiny::event.handler  = [&](){
 
@@ -55,15 +61,28 @@ int main( int argc, char* args[] ) {
   };
 
   Tiny::view.interface = [&](){
-    ImGui::SetNextWindowSize(ImVec2(500, 260), ImGuiCond_Once);
+    ImGui::SetNextWindowSize(ImVec2(500, 300), ImGuiCond_Once);
     ImGui::Begin("Circumcenter Iteration Map Stereographic Projection", NULL, ImGuiWindowFlags_NoResize);
-    ImGui::DragFloat("Scale", &scale, 0.01f, 0.0f, 20.0f);
-    ImGui::SliderInt("N", &N, 3, 8);
+    if(ImGui::DragFloat("Scale", &K, 0.01f, 0.0f, 20.0f)){
+      for(auto& p: positions){
+        p = 5.0f*normalize(p);
+        p /= getscale(stereographic(p/5.0f, K));
+      }
+      posbuf.fill(positions);
+    }
+    if(ImGui::SliderInt("N", &N, 3, 8)){
+      for(auto& p: positions){
+        p = 5.0f*normalize(p);
+        p /= getscale(stereographic(p/5.0f, K));
+      }
+      posbuf.fill(positions);
+    }
     ImGui::ColorEdit4("Converge Color", &converge[0]);
     ImGui::ColorEdit4("Diverge Color", &diverge[0]);
     ImGui::RadioButton("Color Scale", &viewmode, 0); ImGui::SameLine();
     ImGui::RadioButton("Color Rotation", &viewmode, 1); ImGui::SameLine();
     ImGui::RadioButton("Color LogScale", &viewmode, 2);
+    ImGui::DragFloat("Log-Scale", &logscale, 0.01f, 0.0f, 20.0f);
     ImGui::End();
   };	//Set Interface Function
 
@@ -73,10 +92,11 @@ int main( int argc, char* args[] ) {
 
     sphere.use();
     sphere.uniform("vp", cam::vp);	//View Projection Matrix
-    sphere.uniform("scale", scale);
+    sphere.uniform("scale", K);
     sphere.uniform("converge", converge);
     sphere.uniform("diverge", diverge);
     sphere.uniform("viewmode", viewmode);
+    sphere.uniform("logscale", logscale);
     sphere.uniform("N", N);
     icosahedron.render(GL_TRIANGLES);							  //Render Model with Lines
 
