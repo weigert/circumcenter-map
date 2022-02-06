@@ -1,62 +1,65 @@
 #include <TinyEngine/TinyEngine>
 #include <TinyEngine/camera>
+#include "icosphere.h"
 
 using namespace std;
-#include "model.h"
+/*
+    To improve this model:
+      - Higher density mesh in pole regions
+      - Change between scale representation, colorings
+      -
+*/
+
+
+#define PI 3.14159265f
+
+int N = 3;
+float K = 1.0f;
+
 
 int main( int argc, char* args[] ) {
 
   int viewmode = 0;
   float logscale = 1.0f;
+  bool scalesphere = false;
 
   Tiny::window("Circumcenter Iteration Map Stereographic Projection", 800, 800);	//Open Window
 
   cam::near = -100.0f;
   cam::far = 100.0f;
-  cam::zoomrate *= 3.0f;
-  cam::init(61.0f, cam::ORTHO);
+  cam::zoomrate *= 10.0f;
+  cam::init(200.0f, cam::ORTHO);
 
   Shader sphere({"shader/sphere.vs", "shader/sphere.fs"}, {"in_Position"});
 
-  Model icosahedron({"in_Position"});
+  Icosphere icosahedron;
 
-  std::vector<glm::vec3> positions;
-  std::vector<glm::uvec3> indices;
+  /*
 
   isobuild(positions, indices);
-  for(int i = 0; i < 6; i++)
+  for(int i = 0; i < 5; i++)
     isosplit(positions, indices);
 
+  if(viewmode == 2)
   for(auto& p: positions){
-    p = 5.0f*normalize(p);
-    p /= getscale(stereographic(p/5.0f, K));
+     p = normalize(p);
+     p /= getscale(stereographic(p, K));
   }
 
-  std::sort(indices.begin(), indices.end(), [&](const glm::uvec3& a, const glm::uvec3& b){
-    glm::vec3 ap = cam::vp*glm::vec4((positions[a.x] + positions[a.y] + positions[a.z])/3.0f, 1.0);
-    glm::vec3 bp = cam::vp*glm::vec4((positions[b.x] + positions[b.y] + positions[b.z])/3.0f, 1.0);
-    return ap.z > bp.z;
-  });
-
-  Buffer posbuf(positions);
-  icosahedron.bind<glm::vec3>("in_Position", &posbuf);
-  icosahedron.index(new Buffer(indices), true);
-  icosahedron.SIZE = indices.size()*3;
+  */
 
   glDisable(GL_CULL_FACE);
 
-  glm::vec4 converge = glm::vec4(0,1,0,0.75);
-  glm::vec4 diverge = glm::vec4(1,0,0,0);
+  glm::vec4 converge = glm::vec4(0,1,0,1);
+  glm::vec4 diverge = glm::vec4(1,0,0,1);
+  glm::mat4 invvp = glm::inverse(cam::vp);
+
 
   Tiny::event.handler  = [&](){
 
-    if(cam::handler())
-    std::sort(indices.begin(), indices.end(), [&](const glm::uvec3& a, const glm::uvec3& b){
-      glm::vec3 ap = cam::vp*glm::vec4((positions[a.x] + positions[a.y] + positions[a.z])/3.0f, 1.0);
-      glm::vec3 bp = cam::vp*glm::vec4((positions[b.x] + positions[b.y] + positions[b.z])/3.0f, 1.0);
-      return ap.z > bp.z;
-    });
-    icosahedron.buffers["index"]->fill(indices);
+    if(cam::handler()){
+      invvp = glm::inverse(cam::vp);
+    }
 
   };
 
@@ -64,27 +67,45 @@ int main( int argc, char* args[] ) {
     ImGui::SetNextWindowSize(ImVec2(500, 300), ImGuiCond_Once);
     ImGui::Begin("Circumcenter Iteration Map Stereographic Projection", NULL, ImGuiWindowFlags_NoResize);
     if(ImGui::DragFloat("Scale", &K, 0.01f, 0.0f, 20.0f)){
-      for(auto& p: positions){
-        p = 5.0f*normalize(p);
-        p /= getscale(stereographic(p/5.0f, K));
+
+        /*
+      if(viewmode == 2){
+        for(auto& p: positions){
+          p = normalize(p);
+          p /= getscale(stereographic(p, K));
+        }
+        posbuf.fill(positions);
       }
-      posbuf.fill(positions);
+      else for(auto& p: positions)
+        p = normalize(p);
+        */
+
     }
     if(ImGui::SliderInt("N", &N, 3, 8)){
-      for(auto& p: positions){
-        p = 5.0f*normalize(p);
-        p /= getscale(stereographic(p/5.0f, K));
+
+      /*
+      if(viewmode == 2){
+        for(auto& p: positions){
+          p = normalize(p);
+          p /= getscale(stereographic(p, K));
+        }
+        posbuf.fill(positions);
       }
-      posbuf.fill(positions);
+      else for(auto& p: positions)
+        p = normalize(p);
+
+        */
     }
     ImGui::ColorEdit4("Converge Color", &converge[0]);
     ImGui::ColorEdit4("Diverge Color", &diverge[0]);
     ImGui::RadioButton("Color Scale", &viewmode, 0); ImGui::SameLine();
-    ImGui::RadioButton("Color Rotation", &viewmode, 1); ImGui::SameLine();
-    ImGui::RadioButton("Color LogScale", &viewmode, 2);
+    ImGui::RadioButton("Color Rotation", &viewmode, 1);// ImGui::SameLine();
+    ImGui::Checkbox("Scale Sphere", &scalesphere);
+  //  if(ImGui::RadioButton("Color LogScale", &viewmode, 2))
     ImGui::DragFloat("Log-Scale", &logscale, 0.01f, 0.0f, 20.0f);
     ImGui::End();
   };	//Set Interface Function
+
 
   Tiny::view.pipeline = [&](){
 
@@ -92,11 +113,12 @@ int main( int argc, char* args[] ) {
 
     sphere.use();
     sphere.uniform("vp", cam::vp);	//View Projection Matrix
+    sphere.uniform("invvp", invvp);	//View Projection Matrix
     sphere.uniform("scale", K);
     sphere.uniform("converge", converge);
     sphere.uniform("diverge", diverge);
     sphere.uniform("viewmode", viewmode);
-    sphere.uniform("logscale", logscale);
+    sphere.uniform("scalesphere", scalesphere);
     sphere.uniform("N", N);
     icosahedron.render(GL_TRIANGLES);							  //Render Model with Lines
 
