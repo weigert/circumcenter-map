@@ -23,8 +23,12 @@ void main() {
 
 	vec3 pos = in_Position;
 
-	if(scalesphere)
-	pos /= getScale(stereographic(pos, scale));
+	if(scalesphere){
+	//	float scale = getScale(stereographic(pos, scale));
+	//	pos *= log(scale);
+
+		pos /= getScale(stereographic(pos, scale));
+	}
 
 	gl_Position = vp * vec4(pos, 1.0f);
 	ex_Normal = normalize(in_Position);

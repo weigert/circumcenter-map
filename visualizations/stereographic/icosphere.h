@@ -187,6 +187,32 @@ void Icosphere::split(){
     //Average Position
 
     glm::vec3 TC = normalize((a + b + c)/3.0f);
+    if(abs(TC.y) > 0.7)
+      splittriangle(i);
+    else newind.push_back(indices[i]);
+
+
+    //Loop over Old Triangles
+  }
+
+  indices = newind;
+
+  newind.clear();
+
+  for(int i = 0; i < indices.size(); i++){
+
+    GLuint k1 = indices[i][0];
+    GLuint k2 = indices[i][1];
+    GLuint k3 = indices[i][2];
+
+    //Positions of the old triangle
+    glm::vec3 a = positions[k1];
+    glm::vec3 b = positions[k2];
+    glm::vec3 c = positions[k3];
+
+    //Average Position
+
+    glm::vec3 TC = normalize((a + b + c)/3.0f);
     if(abs(TC.y) > 0.8)
       splittriangle(i);
     else newind.push_back(indices[i]);

@@ -21,7 +21,13 @@ int main( int argc, char* args[] ) {
 
   int viewmode = 0;
   float logscale = 1.0f;
-  bool scalesphere = false;
+  bool scalesphere = true;
+
+
+
+  float SK = 6.0f;
+  float SM = 4.0f;
+  float GM = 2.0f;
 
   Tiny::window("Circumcenter Iteration Map Stereographic Projection", 800, 800);	//Open Window
 
@@ -99,17 +105,20 @@ int main( int argc, char* args[] ) {
     ImGui::ColorEdit4("Converge Color", &converge[0]);
     ImGui::ColorEdit4("Diverge Color", &diverge[0]);
     ImGui::RadioButton("Color Scale", &viewmode, 0); ImGui::SameLine();
-    ImGui::RadioButton("Color Rotation", &viewmode, 1);// ImGui::SameLine();
+    ImGui::RadioButton("Color Rotation", &viewmode, 1); ImGui::SameLine();
+    ImGui::RadioButton("Color LogScale", &viewmode, 2);// ImGui::SameLine();
     ImGui::Checkbox("Scale Sphere", &scalesphere);
-  //  if(ImGui::RadioButton("Color LogScale", &viewmode, 2))
     ImGui::DragFloat("Log-Scale", &logscale, 0.01f, 0.0f, 20.0f);
+    ImGui::DragFloat("Scale K", &SK, 0.01f, 0.0f, 20.0f);
+    ImGui::DragFloat("Scale GMax", &GM, 0.01f, 0.0f, 20.0f);
+    ImGui::DragFloat("Scale Max", &SM, 0.01f, 0.0f, 20.0f);
     ImGui::End();
   };	//Set Interface Function
 
 
   Tiny::view.pipeline = [&](){
 
-    Tiny::view.target(glm::vec3(0));
+    Tiny::view.target(glm::vec3(1));
 
     sphere.use();
     sphere.uniform("vp", cam::vp);	//View Projection Matrix
@@ -119,6 +128,9 @@ int main( int argc, char* args[] ) {
     sphere.uniform("diverge", diverge);
     sphere.uniform("viewmode", viewmode);
     sphere.uniform("scalesphere", scalesphere);
+    sphere.uniform("SK", SK);
+    sphere.uniform("SM", SM);
+    sphere.uniform("GM", GM);
     sphere.uniform("N", N);
     icosahedron.render(GL_TRIANGLES);							  //Render Model with Lines
 

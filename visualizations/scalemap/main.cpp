@@ -9,8 +9,8 @@ using namespace glm;
 
 #define PI 3.14159265f
 
-const int N = 8;
-const double K = 10.0f;
+const int N = 3;
+const double K = 1.0f;
 const double EPSILON = 1E-16;
 
 uniform_real_distribution<double> u(0.0, 1.0);

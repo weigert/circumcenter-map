@@ -49,8 +49,19 @@ bool iscoplanar(vec2 M, vec2 A, vec2 B) {
 }
 
 vec2 circumcenter(vec2 M, vec2 A, vec2 B) {
+
+
   mat2 Q = inverse(mat2(A.x-M.x, B.x-M.x, A.y-M.y, B.y-M.y));
+  //return Q*vec2(dot(A,B)-dot(M,B), dot(B,A)-dot(M,A));
+
   return Q*0.5*vec2(dot(A,A)-dot(M,M), dot(B,B)-dot(M,M));
+
+  //vec2 v = vec2(dot(A,A)-dot(M,M), dot(B,B)-dot(M,M));
+
+  // v += vec2(length(A-B) - length(M-B), length(A-B) - length(M-A));
+
+  //return Q*0.5*v;
+
 }
 
 vec3 hsv2rgb(vec3 c){
@@ -92,15 +103,14 @@ void main(){
     tempsetB[i] = vec2(0);
   }
 
-
-    //Check Co-Planarity
-    for(int i = 0; i < N; i++){
-      if(iscoplanar(M, tempsetA[i], tempsetA[(i+1)%N])){
-        if(viewcolor == 0) fragColor = vec4(diverge, 1.0);
-        if(viewcolor == 1) fragColor = vec4(black, 1.0);
-        return;
-      }
+  //Check Co-Planarity
+  for(int i = 0; i < N; i++){
+    if(iscoplanar(M, tempsetA[i], tempsetA[(i+1)%N])){
+      if(viewcolor == 0) fragColor = vec4(diverge, 1.0);
+      if(viewcolor == 1) fragColor = vec4(black, 1.0);
+      return;
     }
+  }
 
   for(int i = 0; i < N; i++){   //Iterate N Times
     for(int k = 0; k < N; k++){ //Over N Intervals
@@ -123,11 +133,17 @@ void main(){
     if(N%2 == 0) scale = length(tempsetA[1]-tempsetA[0])/length(p[1]-p[0]);
     else scale = length(tempsetB[1]-tempsetB[0])/length(p[1]-p[0]);
 
+
     if(viewcolor == 0){
       scale /= threshold;
-      if(scale < 1) scale = 0;
-      else scale = 1;
-      fragColor = mix(vec4(converge,1), vec4(diverge, 1), scale);
+      if(scale < 1) fragColor = vec4(converge,1);
+      else fragColor = vec4(diverge, 1);
+
+
+      if(abs(scale-1.0f) < 0.01)
+        fragColor = vec4(0,0,0,1);
+
+
     }
     else{
       float value = 1.0;
@@ -146,6 +162,7 @@ void main(){
 
       fragColor = vec4(colorscheme(scale, value), 1.0);
     }
+
 
 
   }
@@ -251,5 +268,7 @@ void main(){
     if(length(M-anchor) < pointsize/zoom) fragColor = vec4(white,1);
 
   }
+
+
 
 }

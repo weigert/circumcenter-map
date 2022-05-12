@@ -75,15 +75,17 @@ int main( int argc, char* args[] ) {
   //Size of the N-Gon
 
   const int K = (2 << 14);
-  const float scale = 0.5f;
+  const float scale = 1.0f;
 
   cout<<"Generating Samples"<<endl;
 
   vector<float> scales;
 
   // Generate Samples
-  for(size_t k = 0; k < K; k++)
-    scales.push_back(getscale(stereographic(spheresample(generator), scale)));
+  while(scales.size() < K){
+    float S = getscale(stereographic(spheresample(generator), scale));
+    if(S <= 1) scales.push_back(S);
+  }
 
   string scalefile = "scales_N"+to_string(N)+"_S"+to_string(K)+"_K"+to_string(scale)+".txt";
 

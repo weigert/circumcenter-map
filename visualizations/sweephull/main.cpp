@@ -35,6 +35,12 @@ int main( int argc, char* args[] ) {
 
 	Tiny::loop([&](){
 
+		if(active){
+			shift += dshift;
+			if(shift > 20) dshift *= -1.0;
+			if(shift < -10) dshift *= -1.0;
+		}
+
 	});
 
 	Tiny::quit();

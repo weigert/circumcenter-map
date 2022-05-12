@@ -59,48 +59,19 @@ std::vector<glm::vec2> triangleset;
 
 //Functions
 
-glm::vec2 circumcenter(glm::vec2 M, glm::vec2 A, glm::vec2 B) {
+glm::vec2 trianglecenter(glm::vec2 M, glm::vec2 A, glm::vec2 B) {
 
     const float EPSILON = 1E-12;
 
-    float fabsy1y2 = abs(M.y - A.y);
-    float fabsy2y3 = abs(A.y - B.y);
+    glm::mat2 Q = glm::inverse(glm::mat2(A.x-M.x, B.x-M.x, A.y-M.y, B.y-M.y));
+  //  return Q*glm::vec2(glm::dot(A,B)-glm::dot(M,B), glm::dot(B,A)-glm::dot(M,A));
 
-    float xc, yc, m1, m2, mx1, mx2, my1, my2, dx, dy;
 
-    /* Check for coincident points */
-    if(fabsy1y2 < EPSILON && fabsy2y3 < EPSILON) return M;
+  //glm::vec2 v = glm::vec2(glm::dot(A,A)-glm::dot(M,M), glm::dot(B,B)-glm::dot(M,M));
+  //v += glm::vec2(glm::length(A-B) - glm::length(M-B), glm::length(A-B) - glm::length(M-A));
+  //return Q*0.5f*v;
 
-    if(fabsy1y2 < EPSILON) {
-        m2  = -((B.x - A.x) / (B.y - A.y));
-        mx2 = (A.x + B.x) / 2.0;
-        my2 = (A.y + B.y) / 2.0;
-        xc  = (A.x + M.x) / 2.0;
-        yc  = m2 * (xc - mx2) + my2;
-    }
-
-    else if(fabsy2y3 < EPSILON) {
-        m1  = -((A.x - M.x) / (A.y - M.y));
-        mx1 = (M.x + A.x) / 2.0;
-        my1 = (M.y + A.y) / 2.0;
-        xc  = (B.x + A.x) / 2.0;
-        yc  = m1 * (xc - mx1) + my1;
-    }
-
-    else {
-        m1  = -((A.x - M.x) / (A.y - M.y));
-        m2  = -((B.x - A.x) / (B.y - A.y));
-        mx1 = (M.x + A.x) / 2.0;
-        mx2 = (A.x + B.x) / 2.0;
-        my1 = (M.y + A.y) / 2.0;
-        my2 = (A.y + B.y) / 2.0;
-        xc  = (m1 * mx1 - m2 * mx2 + my2 - my1) / (m1 - m2);
-        yc  = (fabsy1y2 > fabsy2y3) ?
-        m1 * (xc - mx1) + my1 :
-        m2 * (xc - mx2) + my2;
-    }
-
-    return glm::vec2(xc, yc);
+    return Q*0.5f*glm::vec2(glm::dot(A,A)-glm::dot(M,M), glm::dot(B,B)-glm::dot(M,M));
 
 }
 
@@ -110,7 +81,7 @@ void computeTriangles(){
     triangleset.push_back(pointset[i]);
   for(int i = 0; i < depth; i++){
     for(int j = 0; j < N; j++){
-      triangleset.push_back(circumcenter(anchor, triangleset[i*N+j], triangleset[i*N+(j+1)%N]));
+      triangleset.push_back(trianglecenter(anchor, triangleset[i*N+j], triangleset[i*N+(j+1)%N]));
     }
   }
   update = true;
@@ -123,7 +94,7 @@ glm::vec2 scalerot(){
     newset.push_back(pointset[i]);
   for(int i = 0; i < N; i++){
     for(int j = 0; j < N; j++){
-      newset.push_back(circumcenter(mousepos, newset[i*N+j], newset[i*N+(j+1)%N]));
+      newset.push_back(trianglecenter(mousepos, newset[i*N+j], newset[i*N+(j+1)%N]));
     }
   }
 
@@ -326,7 +297,7 @@ Handle interfaceFunc = [](){
   ImGui::SetNextWindowSize(ImVec2(500, 500), ImGuiCond_Once);
 
   //Open Window
-  ImGui::Begin("Iterative Circumcenter Map (c) N. McDonald, D. Reznik", NULL, ImGuiWindowFlags_NoResize);
+  ImGui::Begin("Iterative trianglecenter Map (c) N. McDonald, D. Reznik", NULL, ImGuiWindowFlags_NoResize);
 
   if(ImGui::BeginTabBar("Tab Bar", ImGuiTabBarFlags_None)){
     if(ImGui::BeginTabItem("Visualization")){

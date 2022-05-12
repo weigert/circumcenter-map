@@ -11,13 +11,14 @@ float bias[2] = {0.0};
 double zoom = 10;
 int order = 2;
 
-float shift = 5.0f;
+float shift = -10.0f;
 bool invert = false;
 
 float cc[4] = {0.070, 0.086, 0.211, 1.0};
 float dc[4] = {0.882, 0.157, 0.204, 1.0};
 
 bool active = false;
+float dshift = 0.1;
 bool appear = false;
 float appearAmp = 1.0;
 bool movex = false;
@@ -76,8 +77,9 @@ Handle interfaceFunc = [](){
 
     ImGui::ColorEdit3("Intersect Color", cc);
     ImGui::ColorEdit3("Miss Color", dc);
-    ImGui::DragFloat("Shift", &shift, 0.01, -15, 15);
+    ImGui::DragFloat("Shift", &shift, 0.01, -10, 20);
     ImGui::Checkbox("Invert", &invert);
+    ImGui::Checkbox("Animate", &active);
 
   ImGui::End();
 };
