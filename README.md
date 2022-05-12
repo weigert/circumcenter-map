@@ -1,6 +1,8 @@
 # circumcenter-map
 
-Repository for the publication "Exploring the Circumcenter Map" by Ronaldo Garcia, Nicholas McDonald and Dan Reznik.
+Repository for the publication McDonald, N., Garcia, R., and Reznik, D. Exploring the dynamics of the circumcenter map. Math. Intelligencer (2022), arXiv:2202.02551. to appear.
+
+Companion Article: https://nickmcd.me/2022/05/12/exploring-the-iterative-circumcenter-map-gpu-acceleration/
 
 This allows for C / C++ based visualization of the iterative circumcenter map on local devices for fast computation, and also provides a webGL viewer.
 
